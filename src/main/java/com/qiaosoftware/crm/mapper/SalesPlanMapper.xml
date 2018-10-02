@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.SalesPlanMapper">
+
+	<insert id="saveEntity">
+		<selectKey order="BEFORE" keyProperty="id" keyColumn="id" resultType="int">
+				select crm_seq.nextval from dual
+		</selectKey>
+		INSERT INTO sales_plan (id, plan_date, todo, chance_id)
+		VALUES(#{id}, #{date}, #{todo}, #{chance.id})
+	</insert>
+	
+	<delete id="remove">
+		delete from sales_plan
+		where id = #{id}
+	</delete>
+	
+	<update id="updateToDo">
+		update sales_plan set todo = #{todo}
+    	where id = #{id}
+	</update>
+	
+	<update id="update">
+		update sales_plan set plan_result = #{result}
+    	where id = #{id}	
+	</update>
+	
+	<insert id="save">
+		<selectKey order="BEFORE" keyProperty="id" keyColumn="id" resultType="int">
+			select crm_seq.nextval from dual
+		</selectKey>
+		INSERT INTO sales_plan (id, plan_date, todo, chance_id)
+		VALUES(#{id}, #{planDate}, #{todo}, #{chanceId})
+	</insert>
+	
+	<select id="getList" resultType="com.qiaosoftware.crm.entity.SalesPlan">
+		
+		select id, plan_date AS "date", plan_result AS "result", todo
+		from sales_plan
+		where chance_id = #{id}
+		
+	</select>
+
+	<!-- 
+	<select id="getChanceForPlan" resultMap="chanceMap">
+		select s.id, source, cust_name, rate, title, contact, contact_tel,
+			   description, create_date, status, created_user_id
+		from sales_chances s
+		JOIN users u
+		ON created_user_id = u.id
+		join sales_plan sp
+    	on sp.chance_id = s.id
+		where id = #{id}
+	</select>
+	
+	<resultMap type="com.qiaosoftware.crm.entity.SalesChance" id="chanceMap">
+		<result column="source" property="source"/>
+		<result column="cust_name" property="custName"/>
+		<result column="rate" property="rate"/>
+		<result column="title" property="title"/>
+		<result column="contact" property="contact"/>
+		<result column="contact_tel" property="contactTel"/>
+		<result column="description" property="description"/>
+		<result column="create_date" property="createDate"/>
+		<result column="status" property="status"/>
+		
+		<association property="createBy" javaType="com.qiaosoftware.crm.entity.User"
+					column="created_user_id" select="selectCreateBy"></association>
+					
+		<collection property="salesPlans" ofType="com.qiaosoftware.crm.entity.SalesPlan"
+					select="selectPlans" column="s.id"></collection>
+	</resultMap>
+	
+	<select id="selectCreateBy" resultType="com.qiaosoftware.crm.entity.User">
+		select name
+		from users
+		where id = #{id}
+	</select>	
+	<select id="selectPlans" resultType="com.qiaosoftware.crm.entity.SalesPlan">
+		select id, plan_date, plan_result, todo
+		from sales_plan
+		where id = #{id}
+	</select>
+	 -->
+	<select id="getChanceForPlan" resultType="com.qiaosoftware.crm.entity.SalesChance">
+		SELECT s.id, source, cust_name, rate, title, contact, contact_tel, description, create_date, status,
+			   u.name AS "createBy.name"
+		FROM sales_chances s
+		LEFT OUTER JOIN users u
+		ON  created_user_id = u.id
+		WHERE s.id = #{id}
+	</select>
+	
+	<select id="getConditionList" resultType="com.qiaosoftware.crm.entity.SalesChance">
+		select * 
+		from (
+			select rownum rn, id, cust_name, title, contact, contact_tel, create_date, status
+			from (
+				select id, cust_name, title, contact, contact_tel, create_date, status
+				from sales_chances
+				where status != #{status} and designee_id = #{loginUser.id}
+			) 
+			<where>
+				<if test="custName != null">
+					cust_name like #{custName}
+				</if>
+				<if test="title != null">
+					AND title like #{title}
+				</if>
+				<if test="contact != null">
+					AND contact like #{contact}
+				</if>
+			</where>
+			order by id desc
+		)
+		<![CDATA[
+			WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+        ]]>
+	</select>
+	
+	<select id="getConditionTotalRecordNo" resultType="long">
+		select count(id) 
+		from (
+			select id, cust_name, title, contact
+			from sales_chances
+			where status != #{status} and designee_id = #{loginUser.id}
+		)
+		<where>
+			<if test="custName != null">
+				cust_name like #{custName}
+			</if>
+			<if test="title != null">
+				AND title like #{title}
+			</if>
+			<if test="contact != null">
+				AND contact like #{contact}
+			</if>
+		</where>
+		
+	</select>
+	
+</mapper>

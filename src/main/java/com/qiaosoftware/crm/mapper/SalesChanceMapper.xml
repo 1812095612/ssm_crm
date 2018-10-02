@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.SalesChanceMapper">
+
+	<update id="updateStatus">
+		update sales_chances set status = #{status}
+		where id = #{id}
+	</update>
+
+	<update id="updateChance">
+		
+		update sales_chances set status = #{status}, designee_id = #{designee.id}, designee_date = #{designeeDate}
+		where id = #{id}			
+		
+	</update>
+
+	<select id="getConditionList" resultType="com.qiaosoftware.crm.entity.SalesChance">
+		select * 
+		from (
+			select rownum rn, id, cust_name, title, contact, contact_tel, create_date 
+			from (
+				select id, cust_name, title, contact, contact_tel, create_date
+				from sales_chances
+				where status = #{status} and created_user_id = #{createBy.id}
+			) 
+			<where>
+				<if test="custName != null">
+					cust_name like #{custName}
+				</if>
+				<if test="title != null">
+					AND title like #{title}
+				</if>
+				<if test="contact != null">
+					AND contact like #{contact}
+				</if>
+			</where>
+			order by id desc
+		)
+		<![CDATA[
+			WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+        ]]>
+	</select>
+	
+	<select id="getConditionTotalRecordNo" resultType="long">
+		select count(id) 
+		from (
+			select id, cust_name, title, contact
+			from sales_chances
+			where status = #{status} and created_user_id = #{createBy.id}
+		)
+		<where>
+			<if test="custName != null">
+				cust_name like #{custName}
+			</if>
+			<if test="title != null">
+				AND title like #{title}
+			</if>
+			<if test="contact != null">
+				AND contact like #{contact}
+			</if>
+		</where>
+		
+	</select>
+	
+	<update id="update">
+		
+		update sales_chances set source = #{source}, cust_name = #{custName},
+								 rate = #{rate}, title = #{title},
+								 contact = #{contact}, contact_tel = #{contactTel},
+								 description = #{description}
+		where id = #{id}
+		
+	</update>
+	
+	<select id="get" resultType="com.qiaosoftware.crm.entity.SalesChance">
+		SELECT id, source, cust_name, rate, title, contact, contact_tel, description, create_date
+		FROM sales_chances
+		WHERE id = #{id}
+	</select>
+	
+	<delete id="delete">
+		delete from sales_chances
+		where id = #{id}
+	</delete>
+	
+	<insert id="save">
+		INSERT INTO sales_chances(id, source, cust_name, rate, title, contact, contact_tel, description, status, created_user_id, create_date)
+		VALUES(crm_seq.nextval, #{source}, #{custName}, #{rate}, #{title}, #{contact}, #{contactTel}, #{description}, #{status}, #{createBy.id}, #{createDate})
+	</insert>
+	
+	<select id="getList" resultType="com.qiaosoftware.crm.entity.SalesChance">
+		
+		select *
+		from(
+			select rownum rn, id, cust_name, title, contact, contact_tel, create_date
+			from sales_chances
+			where status = #{status} and created_user_id = #{createBy.id}
+			order by id desc
+		)
+		<![CDATA[
+			where rn >= #{fromIndex} and rn < #{endIndex}
+		]]>
+		
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		
+		select count(id)
+		from sales_chances
+		where status = #{status} and created_user_id = #{createBy.id}
+		
+	</select>
+	
+</mapper>

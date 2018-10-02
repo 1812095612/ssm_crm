@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.CustomerServMapper">
+
+	<update id="feedbackService">
+		update customer_services set deal_result = #{dealResult}, satisfy = #{satisfy},
+									 service_state = #{serviceState}
+		where id = #{id}
+	</update>
+
+	<update id="dealService">
+		update customer_services set deal_date = #{dealDate}, service_deal = #{serviceDeal},
+									 service_state = #{serviceState}
+		where id = #{id}
+	</update>
+
+	<select id="getServById" resultType="com.qiaosoftware.crm.entity.CustomerServ">
+		select cs.id,cs.service_type,cs.service_title,c.name AS "customer.name",
+			   cs.service_request,u.name AS "createdby.name",
+			   cs.create_date,us.name AS "allotTo.name",cs.allot_date,
+			   cs.service_deal,cs.deal_date,
+			   cs.deal_result,cs.satisfy
+		from customer_services cs
+		left outer join customers c
+		on cs.customer_id = c.id
+		left outer join users u
+		on cs.created_id = u.id
+		left outer join users us
+		on cs.allot_id = us.id
+		where cs.id = #{id}
+	</select>
+
+	<delete id="delete">
+		delete from customer_services where id = #{id}
+	</delete>
+	
+	<update id="allotTo">
+		update customer_services set allot_date = #{allotDate},
+									 allot_id = #{allotId},
+									 service_state = #{serviceState}
+		where id = #{id}									 
+	</update>
+	
+	<select id="getConditionList" resultType="com.qiaosoftware.crm.entity.CustomerServ">
+		SELECT *
+        FROM(
+			select rownum rn,cs.id,service_type,
+				   service_title,service_request,
+				   service_state,create_date,
+				   created_id AS "createdby.id",customer_id AS "customer.id",c.name AS "customer.name", u.name AS "createdby.name"
+			from customer_services cs
+			left outer join customers c
+			on cs.customer_id = c.id
+			left outer join users u
+			on cs.created_id = u.id
+			where service_state = #{serviceState}
+			<if test="serviceType != null">
+				and service_type like #{serviceType}
+			</if>
+			<if test="serviceTitle != null">
+				and service_title like #{serviceTitle}
+			</if>
+			<if test="customerName != null">
+				and c.name like #{customerName}
+			</if>
+			<if test="minCreateDate != null">
+				and create_date >= #{minCreateDate}
+			</if>
+			<if test="maxCreateDate != null">
+				<![CDATA[
+				and create_date <= #{maxCreateDate}
+				]]>
+			</if>
+			)
+          <![CDATA[
+          WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+          ]]>		   
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		select count(id) 
+		from (
+			select c.id, c.name AS "customer.name"
+		    from customer_services cs
+		    left outer join customers c
+		    on cs.customer_id = c.id
+			where service_state = #{serviceState}
+			<if test="serviceType != null">
+				and service_type like #{serviceType}
+			</if>
+			<if test="serviceTitle != null">
+				and service_title like #{serviceTitle}
+			</if>
+			<if test="customerName != null">
+				and c.name like #{customerName}
+			</if>
+			<if test="minCreateDate != null">
+				and create_date >= #{minCreateDate}
+			</if>
+			<if test="maxCreateDate != null">
+				<![CDATA[
+				and create_date <= #{maxCreateDate}
+				]]>
+			</if>
+		    )
+	</select>
+
+	<insert id="save">
+		insert into customer_services(id,service_type,
+									  service_title,service_request,
+									  service_state,create_date,
+									  created_id,customer_id)
+		values(crm_seq.nextval,#{serviceType}, 
+				#{serviceTitle},#{serviceRequest},
+				#{serviceState},#{createDate},
+				#{createdby.id},#{customer.id})									  
+	</insert>
+	 
+</mapper>

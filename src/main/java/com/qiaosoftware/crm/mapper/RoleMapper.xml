@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.RoleMapper">
+
+	<resultMap type="com.qiaosoftware.crm.entity.Authority" id="authorityMap">
+		<id column="id" property="id"/>
+		<result column="display_name" property="displayName"/>
+		
+		<collection property="subAuthorities" ofType="com.qiaosoftware.crm.entity.Authority">
+			<id column="s_id" property="id"/>
+			<result column="s_display_name" property="displayName"/>
+			<result column="s_url" property="url"/>
+		</collection>
+	</resultMap>
+	
+	<select id="getParentAuthorities" resultMap="authorityMap">
+		SELECT p.id, p.display_name,
+               s.id AS "s_id", s.display_name AS "s_display_name", s.url AS "s_url"
+	    FROM authorities p
+	    LEFT OUTER JOIN authorities s
+	    ON p.id = s.parent_authority_id
+	    WHERE p.parent_authority_id is null
+	</select>
+	
+	<resultMap type="com.qiaosoftware.crm.entity.Role" id="roleMap">
+		<id column="id" property="id"/>
+		<result column="name" property="name"/>
+		<result column="enabled" property="enabled"/>
+		<result column="description" property="description"/>
+		
+		<collection property="authorities" ofType="com.qiaosoftware.crm.entity.Authority">
+			<id column="a_id" property="id"/>
+		</collection>
+	</resultMap>
+	
+	<select id="getById" resultMap="roleMap">
+		SELECT r.id, r.name, r.enabled, r.description,
+		       a.id AS "a_id"
+		FROM roles r
+		LEFT OUTER JOIN role_authority ra
+		ON r.id = ra.role_id
+		LEFT OUTER JOIN authorities a
+		ON a.id = ra.authority_id
+		WHERE r.id = #{id}
+	</select>
+
+	<select id="get" resultType="com.qiaosoftware.crm.entity.Role">
+		select id,description,enabled,name
+		from roles
+		where id = #{id}
+	</select>
+
+	<delete id="delete">
+		delete from roles where id = #{id}
+	</delete>
+
+	<insert id="save">
+		insert into roles(id,description,enabled,name)
+		values(crm_seq.nextval,#{description},#{enabled},#{name})
+	</insert>
+
+	<select id="checkName" resultType="int">
+		select count(name) from roles where name = #{name}
+	</select>
+	
+	<select id="getRoleList" resultType="com.qiaosoftware.crm.entity.Role">
+		SELECT *
+        FROM(
+			select rownum rn,id,description,enabled,name
+			from roles
+			)
+          <![CDATA[
+          WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+          ]]>
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		select count(id) from roles
+	</select>
+	
+	<select id="getRoles" resultType="com.qiaosoftware.crm.entity.Role">
+		select * from roles
+		order by id
+	</select>
+	
+</mapper>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.AuthorityMapper">
+
+	<delete id="deleteOldRelationship">
+		delete from role_authority where role_id = #{id}
+	</delete>
+
+	<select id="getRoleAuthorityStringList" resultType="java.lang.String">
+		select authority_id from role_authority where role_id = #{id}
+	</select>
+
+	<insert id="update">
+		insert into role_authority(role_id,authority_id)
+		values(#{id},#{authId})	
+	</insert>
+
+	<select id="getSubList" resultType="com.qiaosoftware.crm.entity.Authority">
+		select id,name,display_name,permissions,parent_authority_id AS "parentAuthority.id",url
+		from authorities
+		where parent_authority_id = #{id}	
+	</select>
+
+	<select id="getAuthorityList" resultType="com.qiaosoftware.crm.entity.Authority">
+		select id,name,display_name,permissions,parent_authority_id,url
+		from authorities 
+		where parent_authority_id is null
+	</select>
+	
+</mapper>

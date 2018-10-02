@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.StorageMapper">
+
+	
+	<update id="update">
+		update storages set stock_count = stock_count + #{incrementCount}
+		where id = #{id}
+	</update>
+
+	<select id="getStorage" resultType="com.qiaosoftware.crm.entity.Storage">
+		select s.id,s.memo,stock_count,stock_ware,ware_house, s.product_id AS "product.id", p.name AS "product.name"
+		from storages s
+		left outer join products p
+		on s.product_id = p.id
+		where s.id = #{id}
+	</select>
+	
+	<insert id="save">
+		insert into storages(id,memo,stock_count,stock_ware,ware_house,product_id)
+		values(crm_seq.nextval,#{memo},#{stockCount},#{stockWare},#{wareHouse},#{product.id})
+	</insert>
+	
+	<select id="getStorageList" resultType="com.qiaosoftware.crm.entity.Storage">
+		SELECT *
+        FROM(
+			select rownum rn,s.id,s.memo,stock_count,stock_ware,ware_house,s.product_id AS "product.id",p.name AS "product.name"
+			from storages s
+			left outer join products p
+			on s.product_id = p.id
+			<where>
+				<if test="productName != null">
+					p.name like #{productName}
+				</if>
+				<if test="wareHouse != null">
+					and s.ware_house like #{wareHouse}
+				</if>
+			</where>
+			)
+          <![CDATA[
+          WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+          ]]>
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		select count(id) 
+		from (
+			select s.id, s.stock_ware, p.name AS "productName"
+			from storages s
+			left outer join products p
+			on s.product_id = p.id
+			<where>
+				<if test="productName != null">
+					p.name like #{productName}
+				</if>
+				<if test="wareHouse != null">
+					and s.ware_house like #{wareHouse}
+				</if>
+			</where>
+		)
+	</select>
+	
+</mapper>

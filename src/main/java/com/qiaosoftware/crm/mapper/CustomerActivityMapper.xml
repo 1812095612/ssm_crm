@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.CustomerActivityMapper">
+	
+	<delete id="delete">
+		delete from customer_activities
+		where id = #{id}
+	</delete>
+	
+	<update id="update">
+		update customer_activities set activity_date = #{date}, description = #{description},
+										place = #{place}, title = #{title}
+		where id = #{id}
+	</update>
+	
+	<select id="get" resultType="com.qiaosoftware.crm.entity.CustomerActivity">
+		select id, activity_date AS "date", description, place, title, customer_id AS "customer.id"
+		from customer_activities
+		where id = #{id}
+	</select>
+	
+	<insert id="save">
+		insert into customer_activities(id, activity_date, description, place, title, customer_id)
+		values(crm_seq.nextval, #{date}, #{description}, #{place}, #{title}, #{customer.id})
+	</insert>
+	
+	<select id="getList" resultType="com.qiaosoftware.crm.entity.CustomerActivity">
+		select * from(
+		select rownum rn, id, activity_date AS "date", description, place, title, customer_id AS "customer.id"
+		from customer_activities where customer_id = #{customerId}
+		)
+		 <![CDATA[
+          WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+          ]]>
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		select count(id) from customer_activities where customer_id = #{customerId}
+	</select>
+	
+</mapper>

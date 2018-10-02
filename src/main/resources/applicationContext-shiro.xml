@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    
+    <!--
+		配置 shiro 的 CacheManager.
+		1. 通常使用 ehcache
+		2. 可以加入 cacheManagerConfigFile 属性来指定具体的 ehcache 的配置文件
+		3. 需要额外加入 ehcache 的 jar 包
+    -->
+    <bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <property name="cacheManagerConfigFile" value="classpath:ehcache.xml"/> 
+    </bean>
+	
+	<!-- 
+		配置shiro的SecurityManager
+		1. 使用 org.apache.shiro.web.mgt.DefaultWebSecurityManager 来配置
+		2. 需要以下两个属性: cacheManager 和 realm
+	-->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+	    <!-- 将cache管理器注入到安全管理器中 -->
+        <property name="cacheManager" ref="cacheManager"/>
+        <!-- 配置你需要使用的Realms，自定义的 Reaml 需要继承 org.apache.shiro.realm.AuthorizingRealm 类 -->
+        <property name="realm" ref="shiroRealm"/>
+    </bean>
+    
+    <!-- 配置自动调用配置在 Spring 中 shiro 组件的生命周期方法的 BeanPostProcessor(比如：@PostConstruct标注的方法) -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+
+    <!--
+		配置 Shiro Filter.
+		1. 在 web.xml 文件中通过配置 DelegatingFilterProxy 来定位到当前的 Filter bean
+    -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <!-- 表示现在要配置的是一个安全管理器 -->
+        <property name="securityManager" ref="securityManager"/>
+        <!-- 出现错误之后的跳转路径的配置 -->
+        <property name="loginUrl" value="/index"/>
+        <!-- 登录成功之后的跳转访问路径 -->
+        <property name="successUrl" value="/success"/>
+        <!-- 认证失败之后的跳转路径页面 -->
+        <property name="unauthorizedUrl" value="/unauthorized"/>
+        <!--
+			shiro里面需要针对于所有的路径进行配置，所有的配置需要通过文本的形式设置
+			配置具体的资源和被拦截的关系
+			1. 需要参照 PPT 中 shiro 中默认的过滤器
+			2. anon: 匿名的. 即任何资源都可以在不被认证和没有权限的情况下被访问.
+			3. authc: 认证的. 该 filter 对应的资源只有在用户被认证之后才可以访问.
+			4. lougout: 登出. 该 filter 可以完成登出操作.
+			5. 注意: shiroFilter 中的 URL 权限采取第一次匹配优先的方式. 所以需要把带通配符的往后放.
+			6. roles: 权限 Filter.
+		-->
+        <property name="filterChainDefinitions">
+            <value>
+                /index = anon
+                /static/** = anon
+                /images/** = anon
+                /user/shiroLogin = anon
+                /user/logout = logout
+                
+                /user/navigate = authc
+                <!-- /menu = anon -->
+                
+                /role/** = roles[role]
+				/user/** = roles[user]
+				/chance/** = roles[chance]
+				/plan/** = roles[plan]
+				/dict/** = roles[dict]
+				/product/** = roles[product]
+				/storage/** = roles[storage]
+				/customer/** = roles[customer]
+				/contact/** = roles[customer]
+                
+                # everything else requires authentication:
+                /** = authc
+            </value>
+        </property>
+    </bean>
+
+</beans>

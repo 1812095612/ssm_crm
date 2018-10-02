@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.CustomerDrainMapper">
+
+	<update id="updateConfirm">
+		update customer_drains set reason = #{reason}, drain_date = #{date}, status = #{status} 
+		where id = #{drainId}
+	</update>
+
+	<update id="updateDelay">
+		update customer_drains set delay = #{delay}
+		where id = #{id}
+	</update>
+	
+	<select id="get" resultType="com.qiaosoftware.crm.entity.CustomerDrain">
+		select cd.id,delay,drain_date,last_order_date,reason,status,customer_id AS "customer.id", c.name AS "customer.name", con.name AS "customer.manager.name"
+		from customer_drains cd
+		left outer join customers c
+		on cd.customer_id = c.id
+		left outer join contacts con
+		on c.manager_id = con.id
+		where cd.id = #{id}
+	</select>
+	
+	<select id="getDrainList" resultType="com.qiaosoftware.crm.entity.CustomerDrain">
+		SELECT *
+        FROM(
+			select rownum rn,cd.id,delay,drain_date,last_order_date,reason,status,customer_id AS "customer.id", c.name AS "customer.name", con.name AS "customer.manager.name"
+			from customer_drains cd
+			left outer join customers c
+			on cd.customer_id = c.id
+			left outer join contacts con
+			on c.manager_id = con.id
+			<where>
+				<if test="customerName != null">
+					c.name like #{customerName}
+				</if>
+				<if test="managerName != null">
+					and con.name like #{managerName}
+				</if>
+			</where>
+			)
+          <![CDATA[
+          WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+          ]]>
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		select count(cd.id) 
+		from customer_drains cd
+		left outer join customers c
+		on cd.customer_id = c.id
+		left outer join contacts con
+		on c.manager_id = con.id
+		<where>
+			<if test="customerName != null">
+				c.name like #{customerName}
+			</if>
+			<if test="managerName != null">
+				and con.name like #{managerName}
+			</if>
+		</where>	
+	</select>
+	
+</mapper>

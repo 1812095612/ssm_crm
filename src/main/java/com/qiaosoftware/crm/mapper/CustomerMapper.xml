@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.CustomerMapper">
+
+	<select id="getAllCustomers" resultType="com.qiaosoftware.crm.entity.Customer">
+		select id,name
+		from customers
+	</select>
+
+	<update id="updateConfirm">
+		update customers set state = #{state}
+		where id = #{customerId}
+	</update>
+	
+	<update id="updateCustomer">
+		update customers set address = #{address},
+							 bank = #{bank},
+							 bank_account = #{bankAccount},
+							 bankroll = #{bankroll},
+							 chief = #{chief},
+							 credit = #{credit},
+							 fax = #{fax},
+							 licence_no = #{licenceNo},
+							 local_tax_no = #{localTaxNo},
+							 name = #{name},
+							 national_tax_no = #{nationalTaxNo},
+							 region = #{region},
+							 satify = #{satify},
+							 state = #{state},
+							 tel = #{tel},
+							 turnover = #{turnover},
+							 websit = #{websit},
+							 zip = #{zip},
+							 manager_id = #{manager.id},
+							 customer_level = #{level}
+		where id = #{id}
+	</update>
+
+	<update id="update">
+		update customers set state = #{state}
+		where id = #{id}
+	</update>
+
+	<select id="get" resultType="com.qiaosoftware.crm.entity.Customer">
+		select c.id,address,bank,bank_account,bankroll,chief,credit,fax,
+				licence_no,local_tax_no,c.name,national_tax_no,
+				no,region,satify,state,c.tel,turnover,websit,zip,manager_id AS "manager.id",customer_level AS "level", con.name AS "manager.name"
+		from customers c
+		LEFT OUTER JOIN contacts con
+		ON c.manager_id = con.id
+		where c.id = #{id}
+	</select>
+	
+	<select id="getConditionList" resultType="com.qiaosoftware.crm.entity.Customer">
+		select *
+		from (
+			select rownum rn, c.id, c.name, c.no, c.region, c.state, c.manager_id AS "manager.id", c.customer_level AS "level", con.name AS "manager.name"
+			from customers c
+			LEFT OUTER JOIN contacts con
+			ON c.manager_id = con.id
+			<where>
+				<if test="name != null">
+					c.name like #{name}
+				</if>
+				<if test="region != null">
+					AND c.region like #{region}
+				</if>
+				<if test="level != null">
+					AND c.customer_level like #{level}
+				</if>
+				<if test="state != null">
+					AND c.state like #{state}
+				</if>
+				<if test="managerIdList != null">
+					AND c.manager_id IN
+					<foreach collection="managerIdList" item="id" open="(" close=")" separator=",">
+						#{id}
+					</foreach>
+				</if>
+			</where>
+			)
+		<![CDATA[
+			WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+        ]]>
+	</select>
+	
+	<select id="getConditionTotalRecordNo" resultType="long">
+		select count(id) from customers
+		<where>
+			<if test="name != null">
+				name like #{name}
+			</if>
+			<if test="region != null">
+				AND region like #{region}
+			</if>
+			<if test="level != null">
+				AND customer_level like #{level}
+			</if>
+			<if test="state != null">
+				AND state like #{state}
+			</if>
+			<if test="managerIdList != null">
+				AND manager_id IN
+				<foreach collection="managerIdList" item="id" open="(" close=")" separator=",">
+					#{id}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	
+	<insert id="save">
+		<selectKey order="BEFORE" keyColumn="id"
+          keyProperty="id" resultType="int">
+          SELECT crm_seq.nextval FROM dual
+     	</selectKey>
+     INSERT INTO customers(id, name, no, state)
+     VALUES(#{id}, #{name}, #{no}, #{state})
+	</insert>
+		
+</mapper>

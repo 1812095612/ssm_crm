@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.ReportMapper">
+
+	<select id="getDataForChart" resultType="java.util.Map">
+		select c.name as "customerName", sum(p.price * oi.item_count) as "totalMoney"
+		from customers c
+		join orders o
+		on o.customer_id = c.id
+		join order_items oi
+		on oi.order_id = o.id
+		join products p
+		on p.id = oi.product_id
+		group by c.name
+	</select>
+
+	<select id="getServiceContent" resultType="java.util.Map">
+		select *
+		from (
+			select rownum rn, temp.*
+			from (
+				select c.name AS "customerName", count(cs.customer_id) AS "number"
+				from customer_services cs
+				left outer join customers c
+				on cs.customer_id = c.id
+				where cs.deal_date is not null
+					<if test="minCreateDate != null">
+						AND cs.create_date >= #{minCreateDate}
+					</if>
+					<if test="maxCreateDate != null">
+						<![CDATA[
+						AND cs.create_date <= #{maxCreateDate}
+						]]>
+					</if>
+				group by c.name
+				) temp
+			)
+			<![CDATA[
+				WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+			]]>
+	</select>
+	
+	<select id="getServiceCount" resultType="long">
+		select count(distinct cs.customer_id)
+		from customer_services cs
+		left outer join customers c
+		on cs.customer_id = c.id
+		where cs.deal_date is not null
+			<if test="minCreateDate != null">
+				AND cs.create_date >= #{minCreateDate}
+			</if>
+			<if test="maxCreateDate != null">
+				<![CDATA[
+				AND cs.create_date <= #{maxCreateDate}
+				]]>
+			</if>
+	</select>
+
+	<select id="getConsistContent" resultType="java.util.Map">
+		<if test="type.equals('customer_level')">
+		select *
+		from (
+			select rownum rn, temp.*
+			from(
+				select count(customer_level) as "number", customer_level AS "lcs"
+				from customers
+				where customer_level is not null
+				group by customer_level
+				) temp
+			) 
+			<![CDATA[
+				WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+			]]>
+		</if>			
+		<if test="type.equals('credit')">
+		select *
+		from (
+			select rownum rn, temp.*
+			from(
+				select count(credit) as "number", credit AS "lcs"
+				from customers
+				where credit is not null
+				group by credit
+				) temp
+			) 
+			<![CDATA[
+				WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+			]]>
+		</if>			
+		<if test="type.equals('satify')">
+		select *
+		from (
+			select rownum rn, temp.*
+			from(
+				select count(satify) as "number", satify AS "lcs"
+				from customers
+				where satify is not null
+				group by satify
+				) temp
+			) 
+			<![CDATA[
+				WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+			]]>
+		</if>			
+	</select>
+
+	<select id="getConsistCount" resultType="long">
+		<if test="type.equals('customer_level')">
+		select count(*)
+		from(
+			select count(customer_level) as "number", customer_level
+			from customers
+			where customer_level is not null
+			group by customer_level
+			)
+		</if>
+		<if test="type.equals('credit')">
+		select count(*)
+		from(
+			select count(credit) as "number", credit
+			from customers
+			where credit is not null
+			group by credit
+			)
+		</if>
+		<if test="type.equals('satify')">
+		select count(*)
+		from(
+			select count(satify) as "number", satify
+			from customers
+			where satify is not null
+			group by satify
+			)
+		</if>
+	</select>
+	
+	<select id="getCustomerTotalMoneyContent" resultType="java.util.Map">
+		select * 
+		from (
+			select rownum rn, temp.* 
+			from (
+					select c.name as "name", sum(p.price * oi.item_count) as "total_money"
+					from customers c
+					join orders o
+					on o.customer_id = c.id
+					join order_items oi
+					on oi.order_id = o.id
+					join products p
+					on p.id = oi.product_id
+					<where>
+						<if test="name != null">
+							c.name LIKE #{name}
+						</if>
+						<if test="minOrderDate != null">
+							AND o.order_date >= #{minOrderDate}
+						</if>
+						<if test="maxOrderDate != null">
+							<![CDATA[
+							AND o.order_date <= #{maxOrderDate}
+							]]>
+						</if>
+					</where>
+					group by c.name
+				) temp
+			)
+		<![CDATA[
+			WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+		]]>
+	</select>
+	
+	<select id="getCustomerTotalMoneyCount" resultType="long">
+		select count(distinct c.id)
+		from customers c
+		join orders o
+		on o.customer_id = c.id
+		join order_items oi
+		on oi.order_id = o.id
+		join products p
+		on p.id = oi.product_id
+		<where>
+			<if test="name != null">
+				c.name LIKE #{name}
+			</if>
+			<if test="minOrderDate != null">
+				AND o.order_date >= #{minOrderDate}
+			</if>
+			<if test="maxOrderDate != null">
+				<![CDATA[
+				AND o.order_date <= #{maxOrderDate}
+				]]>
+			</if>
+		</where>
+	</select>
+	
+</mapper>

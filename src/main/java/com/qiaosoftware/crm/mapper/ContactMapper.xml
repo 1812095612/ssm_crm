@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.qiaosoftware.crm.mapper.ContactMapper">
+
+	<select id="getManagerIdList" resultType="long">
+		select id from contacts where name = #{managerName}
+	</select>
+
+	<select id="getManagers" resultType="com.qiaosoftware.crm.entity.Contact">
+		select * from contacts where customer_id = #{id}
+	</select>
+
+	<delete id="delete">
+		delete from contacts
+		where id = #{contactId}
+	</delete>
+
+	<update id="update">
+		update contacts set name = #{name}, tel = #{tel}, memo = #{memo}, mobile = #{mobile}, position = #{position}, sex = #{sex}
+		where id = #{id}
+	</update>
+	
+	<select id="get" resultType="com.qiaosoftware.crm.entity.Contact">
+		select id, name, tel, customer_id AS "customer.id", memo, mobile, position, sex 
+		from contacts
+		where id = #{id}
+	</select>
+	
+	<insert id="saveEntity">
+		INSERT INTO contacts(id, name, tel, customer_id, memo, mobile, position, sex)
+	    VALUES(crm_seq.nextval, #{name}, #{tel}, #{customer.id}, #{memo}, #{mobile}, #{position}, #{sex})
+	</insert>
+		
+	<select id="getList" resultType="com.qiaosoftware.crm.entity.Contact">
+		select * from(
+		select rownum rn, id, name, tel, customer_id AS "customer.id", memo, mobile, position, sex
+		from contacts t
+		where t.customer_id = #{customerId}
+		)
+		 <![CDATA[
+          WHERE rn >= #{fromIndex} AND rn < #{endIndex}
+          ]]>
+	</select>
+	
+	<select id="getTotalRecordNo" resultType="long">
+		select count(*) from contacts t
+		where t.customer_id = #{customerId}
+	</select>
+	
+	<insert id="save">
+		INSERT INTO contacts(id, name, tel, customer_id)
+	    VALUES(crm_seq.nextval, #{name}, #{tel}, #{customer.id})
+	</insert>
+		
+</mapper>
